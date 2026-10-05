@@ -70,7 +70,7 @@
  [],
  False,
  False,
- 1791184084,
+ 1791185065,
  [('run.exe',
    'C:\\Users\\sonmi\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit-intel\\run.exe',
    'EXECUTABLE')],

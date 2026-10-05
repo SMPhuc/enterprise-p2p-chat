@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 chcp 65001 >nul
 cd /d "%~dp0"
 title EnterpriseSecretChat - Thanh Quang
@@ -17,7 +17,7 @@ if exist "EnterpriseSecretChat.exe" (
     cd /d "%~dp0EnterpriseChat_Client_Package"
     EnterpriseSecretChat.exe "Thanh Quang"
 ) else (
-    python app_client.py "Thanh Quang" 127.0.0.1 8888 company_secret_2026
+    python app_client.py "Thanh Quang" 127.0.0.1 8888 YOUR_SECRET_KEY_HERE
 )
 
 if %ERRORLEVEL% NEQ 0 (
@@ -25,3 +25,5 @@ if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] Ung dung gap su co. Ma loi: %ERRORLEVEL%
     pause
 )
+
+

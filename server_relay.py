@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import json
 import logging
 import os
@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 
 CONFIG_FILE = "config_server.json"
 SERVER_CONFIG = {
-    "server_access_key": "company_secret_2026",
+    "server_access_key": "YOUR_SECRET_KEY_HERE",
     "ip_whitelist_enabled": False,
     "allowed_ips": ["127.0.0.1", "::1"],
     "user_whitelist_enabled": False,
@@ -474,3 +474,4 @@ if __name__ == "__main__":
     t.start()
 
     asyncio.run(RELAY_INSTANCE.start())
+

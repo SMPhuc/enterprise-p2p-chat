@@ -1,4 +1,4 @@
-# 📘 Hướng Dẫn Thiết Lập & Triển Khai Hệ Thống Enterprise P2P Secret Chat
+﻿# 📘 Hướng Dẫn Thiết Lập & Triển Khai Hệ Thống Enterprise P2P Secret Chat
 
 Tài liệu này hướng dẫn chi tiết từng bước để thiết lập máy chủ trung gian (Server Relay), quản trị hệ thống và cấu hình máy khách (Client) cho các kỹ sư trong doanh nghiệp.
 
@@ -52,10 +52,10 @@ Dành cho việc kiểm tra tính năng nhanh trên máy Windows của bạn.
    python server_relay.py 8888
 
    # Cửa sổ 2: Bật Client Alice
-   python app_client.py Alice 127.0.0.1 8888 company_secret_2026
+   python app_client.py Alice 127.0.0.1 8888 YOUR_SECRET_KEY_HERE
 
    # Cửa sổ 3: Bật Client Bob
-   python app_client.py Bob 127.0.0.1 8888 company_secret_2026
+   python app_client.py Bob 127.0.0.1 8888 YOUR_SECRET_KEY_HERE
    ```
 
 ---
@@ -188,7 +188,7 @@ Nếu bạn không muốn thuê VPS hoặc không có IP Public, bạn có thể
 4. Bật Server trên máy bạn: `python server_relay.py 8888`.
 5. Các kỹ sư kết nối trực tiếp qua IP Tailscale:
    ```powershell
-   python app_client.py Bob 100.80.90.10 8888 company_secret_2026
+   python app_client.py Bob 100.80.90.10 8888 YOUR_SECRET_KEY_HERE
    ```
 
 ---
@@ -202,3 +202,5 @@ Truy cập: `http://<IP_Server>:8890` trên trình duyệt:
 2. **Đổi Server Access Key:** Cập nhật ngay lập tức mã khóa truy cập của Server khi cần thay đổi định kỳ.
 3. **Quản lý IP Whitelist:** Bật/tắt chế độ khóa IP và thêm các dải IP được phép truy cập.
 4. **Nhật ký an ninh (Audit Logs):** Ghi nhận chi tiết lịch sử kết nối, ngắt kết nối, các trường hợp nhập sai khóa truy cập hoặc bị chặn IP.
+
+

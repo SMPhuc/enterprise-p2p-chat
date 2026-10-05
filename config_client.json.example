@@ -1,0 +1,8 @@
+{
+  "relay_host": "auto",
+  "fallback_ip": "127.0.0.1",
+  "relay_port": 8888,
+  "server_access_key": "YOUR_SECRET_KEY_HERE",
+  "default_username": "",
+  "mo_ta": "Tu dong do tim Server Relay trong mang LAN Wi-Fi cong ty."
+}

@@ -1,0 +1,8 @@
+{
+  "server_access_key": "YOUR_SECRET_KEY_HERE",
+  "ip_whitelist_enabled": false,
+  "allowed_ips": ["127.0.0.1", "::1"],
+  "user_whitelist_enabled": false,
+  "allowed_users": {},
+  "admin_dashboard_port": 8890
+}

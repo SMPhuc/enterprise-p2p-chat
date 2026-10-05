@@ -4,6 +4,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Sensitive Local Configs containing real secrets
+config_server.json
+config_client.json
+*/config_client.json
+
 # Test suites
 test_*.py
 

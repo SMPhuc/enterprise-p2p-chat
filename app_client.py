@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import hashlib
 import json
 import os
@@ -21,7 +21,7 @@ CLIENT_STATE = {
     "org_cert": None,
     "relay_host": "127.0.0.1",
     "relay_port": 8888,
-    "server_access_key": "company_secret_2026",
+    "server_access_key": "YOUR_SECRET_KEY_HERE",
     "directory": {},
     "active_chat": "#devops-secrets",
     "chat_messages": {}, # target -> list of msgs
@@ -610,7 +610,7 @@ async def connect_relay_loop():
                 "ed_pub": CLIENT_STATE["keys"]["ed_pub"],
                 "x_pub": CLIENT_STATE["keys"]["x_pub"],
                 "cert": CLIENT_STATE["org_cert"],
-                "server_access_key": CLIENT_STATE.get("server_access_key", "company_secret_2026")
+                "server_access_key": CLIENT_STATE.get("server_access_key", "YOUR_SECRET_KEY_HERE")
             }) + "\n"
             writer.write(reg_msg.encode('utf-8'))
             await writer.drain()
@@ -711,7 +711,7 @@ if __name__ == "__main__":
     desired_web_port = 9001
     relay_host = "127.0.0.1"
     relay_port = 8888
-    access_key = "company_secret_2026"
+    access_key = "YOUR_SECRET_KEY_HERE"
 
     # Đọc file config_client.json nếu có (kiểm tra cả thư mục làm việc và thư mục chứa file .exe)
     exec_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
@@ -772,3 +772,4 @@ if __name__ == "__main__":
 
     # Start Async Relay Loop
     asyncio.run(connect_relay_loop())
+

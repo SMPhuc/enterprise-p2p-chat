@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 chcp 65001 >nul
 title EnterpriseSecretChat - Simulation Demo
 cls
@@ -11,11 +11,11 @@ start "Enterprise Relay Server" cmd /k "python server_relay.py 8888"
 timeout /t 2 /nobreak >nul
 
 echo [2/3] Launching Client Instance: Alice...
-start "Alice - Client" cmd /k "python app_client.py Alice 9001 127.0.0.1 8888 company_secret_2026"
+start "Alice - Client" cmd /k "python app_client.py Alice 9001 127.0.0.1 8888 YOUR_SECRET_KEY_HERE"
 timeout /t 1 /nobreak >nul
 
 echo [3/3] Launching Client Instance: Bob...
-start "Bob - Client" cmd /k "python app_client.py Bob 9002 127.0.0.1 8888 company_secret_2026"
+start "Bob - Client" cmd /k "python app_client.py Bob 9002 127.0.0.1 8888 YOUR_SECRET_KEY_HERE"
 
 echo.
 echo ================================================================
@@ -25,3 +25,5 @@ echo - Alice Interface            : http://127.0.0.1:9001
 echo - Bob Interface              : http://127.0.0.1:9002
 echo ================================================================
 pause
+
+
