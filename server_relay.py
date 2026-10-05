@@ -307,7 +307,7 @@ ADMIN_HTML = """<!DOCTYPE html>
         </div>
 
         <div class="card">
-            <h2>👥 Kỹ Sư Đang Trực Tuyến (Live Sessions)</h2>
+            <h2>👥 Người Dùng Đang Trực Tuyến (Live Sessions)</h2>
             <table>
                 <thead>
                     <tr>

@@ -9,17 +9,17 @@ echo ================================================================
 echo.
 echo [*] Auto-discovering Enterprise Server on local Wi-Fi/LAN...
 echo.
-set /p ENG_NAME=">> Enter your Engineer Name (or press Enter for default): "
-if "%ENG_NAME%"=="" (
-    set ENG_NAME=Engineer_%RANDOM%
+set /p USER_NAME=">> Nhap ten nguoi dung (Enter de lay mac dinh): "
+if "%USER_NAME%"=="" (
+    set USER_NAME=User_%RANDOM%
 )
 
 echo.
-echo [OK] Starting secure chat interface for: %ENG_NAME% ...
-EnterpriseSecretChat.exe "%ENG_NAME%"
+echo [OK] Dang khoi dong giao dien chat cho: %USER_NAME% ...
+EnterpriseSecretChat.exe "%USER_NAME%"
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
-    echo [ERROR] Application exited with error code: %ERRORLEVEL%
+    echo [ERROR] Ung dung da thoat voi ma loi: %ERRORLEVEL%
     pause
 )

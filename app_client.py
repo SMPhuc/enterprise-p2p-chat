@@ -6,6 +6,7 @@ import socket
 import sys
 import threading
 import time
+import urllib.parse
 import webbrowser
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from typing import Dict, Any, Optional
@@ -109,7 +110,7 @@ HTML_INTERFACE = """<!DOCTYPE html>
         <div class="sidebar-header">
             <h2>🛡️ Enterprise Secret Chat</h2>
             <div class="user-card">
-                Kỹ sư: <span id="lbl-username">...</span><br>
+                Người dùng: <span id="lbl-username">...</span><br>
                 Định danh Ed25519: <code id="lbl-pubkey" style="font-size:10px; color:#cbd5e1; cursor:pointer;" onclick="copyToClipboard(myPubkey, this)" title="Bấm để copy">... 📋</code>
             </div>
             <div style="margin-top:10px;">
@@ -132,7 +133,7 @@ HTML_INTERFACE = """<!DOCTYPE html>
             </li>
         </ul>
 
-        <div class="section-title">Kỹ Sư Trực Tuyến (1-1 E2EE PFS)</div>
+        <div class="section-title">Người Dùng Trực Tuyến (1-1 E2EE PFS)</div>
         <ul class="list-group" id="list-users">
             <!-- Dynamically populated -->
         </ul>
@@ -216,7 +217,7 @@ HTML_INTERFACE = """<!DOCTYPE html>
                         `;
                     }
                 }
-                document.getElementById('list-users').innerHTML = userListHtml || '<li class="list-item" style="color:#64748b;">Chưa có kỹ sư khác online</li>';
+                document.getElementById('list-users').innerHTML = userListHtml || '<li class="list-item" style="color:#64748b;">Chưa có người dùng khác online</li>';
 
                 // Render chat messages
                 renderMessages(data.chat_messages[currentTarget] || []);
@@ -335,13 +336,22 @@ HTML_INTERFACE = """<!DOCTYPE html>
             fetchState();
         }
 
+        document.getElementById('chk-secret').addEventListener('change', function() {
+            let sel = document.getElementById('sel-burn');
+            sel.disabled = !this.checked;
+            sel.style.opacity = this.checked ? "1" : "0.4";
+        });
+        // Khởi tạo trạng thái ban đầu của select tự hủy
+        document.getElementById('sel-burn').disabled = !document.getElementById('chk-secret').checked;
+        document.getElementById('sel-burn').style.opacity = document.getElementById('chk-secret').checked ? "1" : "0.4";
+
         async function sendMessage() {
             let txtElem = document.getElementById('txt-msg');
             let text = txtElem.value.trim();
             if (!text) return;
             
             let isSecret = document.getElementById('chk-secret').checked;
-            let burnSec = parseInt(document.getElementById('sel-burn').value);
+            let burnSec = isSecret ? parseInt(document.getElementById('sel-burn').value) : 0;
 
             // Xóa ngay lập tức nội dung khỏi ô nhập liệu
             txtElem.value = "";
@@ -402,20 +412,21 @@ class LocalHTTPHandler(SimpleHTTPRequestHandler):
             self.wfile.write(HTML_INTERFACE.encode('utf-8'))
         elif self.path == "/api/state":
             now = time.time()
-            # Xử lý tự hủy đồng bộ thời gian dựa trên timestamp tạo tin nhắn
+            # Xử lý tự hủy đồng bộ thời gian (CHỈ áp dụng cho tin nhắn Secret Vault)
             for target, msg_list in CLIENT_STATE["chat_messages"].items():
                 for m in msg_list:
-                    burn_sec = m.get("burn_after_seconds", 0)
-                    if burn_sec > 0 and not m.get("is_burned", False):
-                        created_ts = m.get("timestamp", now)
-                        expires_at = created_ts + burn_sec
-                        remaining = expires_at - now
-                        if remaining <= 0:
-                            m["is_burned"] = True
-                            m["text"] = "🔥 KHÓA ĐÃ TỰ HỦY"
-                            m["remaining_seconds"] = 0
-                        else:
-                            m["remaining_seconds"] = max(0, int(remaining))
+                    if m.get("is_secret_key", False):
+                        burn_sec = m.get("burn_after_seconds", 0)
+                        if burn_sec > 0 and not m.get("is_burned", False):
+                            created_ts = m.get("timestamp", now)
+                            expires_at = created_ts + burn_sec
+                            remaining = expires_at - now
+                            if remaining <= 0:
+                                m["is_burned"] = True
+                                m["text"] = "🔥 KHÓA ĐÃ TỰ HỦY"
+                                m["remaining_seconds"] = 0
+                            else:
+                                m["remaining_seconds"] = max(0, int(remaining))
 
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -428,7 +439,7 @@ class LocalHTTPHandler(SimpleHTTPRequestHandler):
             }
             self.wfile.write(json.dumps(state).encode('utf-8'))
         elif self.path.startswith("/api/fingerprint"):
-            target = self.path.split("target=")[-1]
+            target = urllib.parse.unquote(self.path.split("target=")[-1])
             fp = ""
             if target in CLIENT_STATE["directory"] and CLIENT_STATE["keys"]:
                 target_ed = CLIENT_STATE["directory"][target]["ed_pub"]
@@ -451,8 +462,8 @@ class LocalHTTPHandler(SimpleHTTPRequestHandler):
         if self.path == "/api/send":
             target = data.get("target", "")
             text = data.get("text", "")
-            is_secret = data.get("is_secret", False)
-            burn_sec = data.get("burn_after_seconds", 0)
+            is_secret = bool(data.get("is_secret", False))
+            burn_sec = int(data.get("burn_after_seconds", 0)) if is_secret else 0
             msg_id = f"msg_{int(time.time() * 1000)}_{os.urandom(3).hex()}"
             ts = time.time()
 
@@ -631,13 +642,14 @@ async def connect_relay_loop():
                         if dec:
                             if sender not in CLIENT_STATE["chat_messages"]:
                                 CLIENT_STATE["chat_messages"][sender] = []
-                            burn_sec = dec.get("burn_after_seconds", 0)
+                            is_secret = dec.get("is_secret_key", False)
+                            burn_sec = dec.get("burn_after_seconds", 0) if is_secret else 0
                             CLIENT_STATE["chat_messages"][sender].append({
                                 "id": msg_id,
                                 "sender": sender,
                                 "text": dec["text"],
                                 "timestamp": dec["timestamp"],
-                                "is_secret_key": dec.get("is_secret_key", False),
+                                "is_secret_key": is_secret,
                                 "burn_after_seconds": burn_sec,
                                 "is_burned": False,
                                 "remaining_seconds": burn_sec if burn_sec > 0 else 0
@@ -694,7 +706,7 @@ def start_http_server(port: int):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    username = args[0] if len(args) > 0 else f"Engineer_{int(time.time()) % 1000}"
+    username = args[0] if len(args) > 0 else f"User_{int(time.time()) % 1000}"
     
     desired_web_port = 9001
     relay_host = "127.0.0.1"
