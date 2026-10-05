@@ -624,8 +624,14 @@ def start_http_server(port: int):
 if __name__ == "__main__":
     username = sys.argv[1] if len(sys.argv) > 1 else f"Engineer_{int(time.time()) % 1000}"
     web_port = int(sys.argv[2]) if len(sys.argv) > 2 else 9001
+    relay_host = sys.argv[3] if len(sys.argv) > 3 else "127.0.0.1"
+    relay_port = int(sys.argv[4]) if len(sys.argv) > 4 else 8888
+    access_key = sys.argv[5] if len(sys.argv) > 5 else "company_secret_2026"
 
     CLIENT_STATE["username"] = username
+    CLIENT_STATE["relay_host"] = relay_host
+    CLIENT_STATE["relay_port"] = relay_port
+    CLIENT_STATE["server_access_key"] = access_key
     CLIENT_STATE["keys"] = EnterpriseCrypto.generate_user_keypair(username)
 
     # Admin Org Cert Demo
@@ -640,6 +646,7 @@ if __name__ == "__main__":
 
     url = f"http://127.0.0.1:{web_port}"
     print(f"🚀 Started Enterprise Chat Client for '{username}'")
+    print(f"📡 Connecting to Relay Server: {relay_host}:{relay_port}")
     print(f"🔗 Opening Web Interface: {url}")
     webbrowser.open(url)
 
