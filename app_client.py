@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import hashlib
 import json
 import os
@@ -740,11 +740,13 @@ if __name__ == "__main__":
             desired_web_port = int(first)
             if len(rem_args) > 1: relay_host = rem_args[1]
             if len(rem_args) > 2 and rem_args[2].isdigit(): relay_port = int(rem_args[2])
-            if len(rem_args) > 3: access_key = rem_args[3]
+            if len(rem_args) > 3 and rem_args[3] and rem_args[3] != "YOUR_SECRET_KEY_HERE":
+                access_key = rem_args[3]
         else:
             relay_host = first
             if len(rem_args) > 1 and rem_args[1].isdigit(): relay_port = int(rem_args[1])
-            if len(rem_args) > 2: access_key = rem_args[2]
+            if len(rem_args) > 2 and rem_args[2] and rem_args[2] != "YOUR_SECRET_KEY_HERE":
+                access_key = rem_args[2]
 
     web_port = find_available_port(desired_web_port)
 
