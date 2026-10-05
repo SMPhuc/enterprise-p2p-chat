@@ -3,7 +3,7 @@ chcp 65001 >nul
 title EnterpriseSecretChat - Simulation Demo
 cls
 echo ================================================================
-echo   🛡️ ENTERPRISE SECRET CHAT - SYSTEM DEMO INITIALIZER
+echo   ENTERPRISE SECRET CHAT - SYSTEM DEMO INITIALIZER
 echo ================================================================
 echo.
 echo [1/3] Starting Enterprise Relay Server on port 8888...

@@ -3,7 +3,7 @@ chcp 65001 >nul
 title EnterpriseSecretChat - Server Relay
 cls
 echo ================================================================
-echo   🛡️ ENTERPRISE SECRET CHAT - SERVER RELAY CONTROLLER
+echo   ENTERPRISE SECRET CHAT - SERVER RELAY CONTROLLER
 echo ================================================================
 echo.
 

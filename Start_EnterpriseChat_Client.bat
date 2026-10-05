@@ -3,7 +3,7 @@ chcp 65001 >nul
 title EnterpriseSecretChat - Local Client
 cls
 echo ================================================================
-echo   🛡️ ENTERPRISE SECRET CHAT - LOCAL CLIENT CONTROLLER
+echo   ENTERPRISE SECRET CHAT - LOCAL CLIENT CONTROLLER
 echo ================================================================
 echo.
 echo Starting EnterpriseSecretChat Client for SMPhuc...

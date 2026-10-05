@@ -4,7 +4,7 @@ cd /d "%~dp0"
 title EnterpriseSecretChat - Client Launcher
 cls
 echo ================================================================
-echo   🛡️ ENTERPRISE SECRET CHAT - SECURE CLIENT LAUNCHER
+echo   ENTERPRISE SECRET CHAT - SECURE CLIENT LAUNCHER
 echo ================================================================
 echo.
 echo [*] Auto-discovering Enterprise Server on local Wi-Fi/LAN...
