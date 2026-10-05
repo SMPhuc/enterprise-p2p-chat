@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import socket
 import sys
 import threading
 import time
@@ -78,8 +79,27 @@ class EnterpriseRelayServer:
         logging.info(f"🌐 Admin Dashboard running at http://127.0.0.1:{SERVER_CONFIG['admin_dashboard_port']}")
         add_audit("SYSTEM_START", f"Server started on port {self.port}")
 
+        # Tự động phát tín hiệu Beacon trong mạng LAN
+        asyncio.create_task(self.broadcast_lan_beacon())
+
         async with server:
             await server.serve_forever()
+
+    async def broadcast_lan_beacon(self):
+        """Phát tín hiệu UDP trong mạng LAN (Port 9998) để các Client tự động kết nối mà không cần nhập IP."""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.setblocking(False)
+        beacon_data = json.dumps({
+            "type": "ENTERPRISE_RELAY_SERVER",
+            "port": self.port
+        }).encode('utf-8')
+        while True:
+            try:
+                sock.sendto(beacon_data, ('<broadcast>', 9998))
+            except Exception:
+                pass
+            await asyncio.sleep(2)
 
     async def handle_client(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         client_name = None

@@ -543,11 +543,53 @@ class LocalHTTPHandler(SimpleHTTPRequestHandler):
         else:
             self.send_error(404)
 
+def discover_lan_server(timeout: float = 1.5) -> Optional[str]:
+    """Tự động tìm kiếm Server Relay trong mạng Wi-Fi/LAN qua UDP port 9998."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.settimeout(timeout)
+    try:
+        sock.bind(('0.0.0.0', 9998))
+        data, addr = sock.recvfrom(2048)
+        msg = json.loads(data.decode('utf-8'))
+        if msg.get("type") == "ENTERPRISE_RELAY_SERVER":
+            server_ip = addr[0]
+            print(f"🎯 [AUTO-DISCOVERY] Tự động phát hiện Máy Chủ Server Relay tại LAN IP: {server_ip}")
+            return server_ip
+    except Exception:
+        pass
+    finally:
+        sock.close()
+    return None
+
 async def connect_relay_loop():
     global RELAY_WRITER
     while True:
         try:
-            reader, writer = await asyncio.open_connection(CLIENT_STATE["relay_host"], CLIENT_STATE["relay_port"])
+            target_host = CLIENT_STATE["relay_host"]
+            target_port = CLIENT_STATE["relay_port"]
+
+            # Nếu relay_host là "auto", thử dò tìm server trong mạng LAN trước
+            if target_host in ["auto", "", "LAN_AUTO"]:
+                disc_ip = await asyncio.to_thread(discover_lan_server, 1.5)
+                if disc_ip:
+                    target_host = disc_ip
+                    CLIENT_STATE["relay_host"] = disc_ip
+                else:
+                    target_host = CLIENT_STATE.get("fallback_ip", "192.168.1.33")
+
+            try:
+                reader, writer = await asyncio.open_connection(target_host, target_port)
+            except Exception:
+                # Nếu không kết nối được IP cấu hình, tự động lắng nghe UDP LAN Beacon
+                disc_ip = await asyncio.to_thread(discover_lan_server, 1.5)
+                if disc_ip:
+                    target_host = disc_ip
+                    CLIENT_STATE["relay_host"] = disc_ip
+                    reader, writer = await asyncio.open_connection(target_host, target_port)
+                else:
+                    raise
+
             RELAY_WRITER = writer
 
             # Đăng ký danh tính

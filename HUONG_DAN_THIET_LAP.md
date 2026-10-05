@@ -60,28 +60,36 @@ Dành cho việc kiểm tra tính năng nhanh trên máy Windows của bạn.
 
 ---
 
-## 3. Thiết Lập 2: Mạng Nội Bộ / Wi-Fi Công Ty (LAN)
+## 3. Thiết Lập 2: Mạng Nội Bộ / Wi-Fi Công Ty (LAN 1-Click Không Cần Internet/VPN)
 
-Dành cho trường hợp các kỹ sư ngồi cùng văn phòng, bắt chung mạng Wi-Fi hoặc mạng dây LAN.
+Dành cho trường hợp 2 máy tính ngồi cùng mạng Wi-Fi hoặc mạng dây LAN công ty. Đồng nghiệp kết nối chỉ với **1 cú nhấp chuột**, hoàn toàn không đi qua Internet công cộng hay VPN.
 
-### Bước 1: Lấy địa chỉ IP máy chủ của bạn
-Mở PowerShell trên máy bạn và chạy:
-```powershell
-ipconfig
-```
-Tìm dòng **IPv4 Address** của Wi-Fi hoặc Ethernet (Ví dụ: `192.168.1.33`).
+### 🌟 Cơ Chế Hoạt Động (Auto-Discovery):
+- **Phía bạn (Máy chủ):** Bật file `BAT_SERVER_LAN.bat`. Server sẽ chạy và tự động phát sóng tín hiệu UDP Beacon (Port 9998) trong mạng nội bộ.
+- **Phía đồng nghiệp:** Mở thư mục `GOI_DONG_NGHIEP_LAN_1CLICK` và bấm đúp chuột vào `CHAY_CHAT_LAN.bat`. Client sẽ **tự động dò tìm và bắt đúng IP máy chủ của bạn** và kết nối thẳng vào mà đồng nghiệp không cần phải gõ bất kỳ địa chỉ IP nào!
 
-### Bước 2: Bật Server trên máy bạn
-```powershell
-python server_relay.py 8888
-```
+---
 
-### Bước 3: Các kỹ sư khác kết nối vào
-Gửi file `app_client.py` và `crypto_core.py` cho đồng nghiệp. Đồng nghiệp chạy lệnh:
-```powershell
-python app_client.py <Tên_Đồng_Nghiệp> 192.168.1.33 8888 company_secret_2026
-```
-*(Thay `192.168.1.33` bằng IP máy chủ của bạn)*.
+### Các Bước Thực Hiện Cụ Thể:
+
+#### Bước 1: Bạn bật Server Relay trên máy mình (Khi cần chat)
+Bấm đúp chuột vào file:
+👉 **`BAT_SERVER_LAN.bat`**  
+*(Màn hình sẽ hiển thị địa chỉ IP LAN của bạn, ví dụ: `192.168.1.33`, và tự động phát sóng tín hiệu tìm kiếm).*
+
+#### Bước 2: Bạn mở giao diện chat của mình
+Bấm đúp chuột vào file:
+👉 **`BAT_CHAT_CUA_TOI.bat`**  
+*(Trình duyệt sẽ tự động mở giao diện Chat của bạn).*
+
+#### Bước 3: Gửi gói 1-Click cho Đồng nghiệp (Chỉ làm 1 lần)
+1. Nén thư mục **`GOI_DONG_NGHIEP_LAN_1CLICK`** thành file `.zip`.
+2. Gửi file zip này cho đồng nghiệp qua USB hoặc mạng nội bộ.
+3. **Thao tác của đồng nghiệp:**
+   - Giải nén file `.zip`.
+   - Bấm đúp vào file **`CHAY_CHAT_LAN.bat`**.
+   - Nhập tên của mình (ví dụ: `Hoang`) và bấm Enter.
+   - Giao diện chat bảo mật sẽ tự động kết nối thẳng tới máy bạn trong 1 giây! *(Đồng nghiệp không cần cài Python, không cần cài VPN, không cần đi qua Internet)*.
 
 ---
 
