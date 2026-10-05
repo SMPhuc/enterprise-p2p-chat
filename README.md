@@ -1,61 +1,97 @@
-# Enterprise P2P Secret Chat (Hệ Thống Chat P2P Bảo Mật Cho Doanh Nghiệp)
+# 🛡️ Enterprise P2P Secret Chat
 
-> **Mô hình kết hợp nghiệp vụ từ [bitchat](https://github.com/permissionlesstech/bitchat) & [simplex-chat](https://github.com/simplex-chat/simplex-chat)**  
-> **Mục tiêu tiên quyết: Bảo mật tối đa để truyền khóa bí mật (API Keys, SSH Keys, Mật khẩu hệ thống) trong đội ngũ kỹ thuật.**
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Security](https://img.shields.io/badge/E2EE-X25519%20%7C%20ChaCha20--Poly1305-red.svg)]()
 
----
-
-## 1. Các Trụ Cột Bảo Mật Chuẩn Kỹ Thuật
-
-1. **Mã hóa E2EE mức cao nhất (X25519 + ChaCha20-Poly1305 + Ed25519)**:
-   - Mỗi tin nhắn sử dụng một cặp khóa tạm thời (Ephemeral Key) sinh ngẫu nhiên -> **Perfect Forward Secrecy (PFS)**. Kể cả nếu thiết bị bị lộ trong tương lai, tin nhắn cũ cũng không thể bị giải mã.
-   - Nội dung được ký số bằng khóa Ed25519 của người gửi -> Chống giả mạo người gửi 100%.
-
-2. **Chế Độ Hộp Két Bí Mật (Secret Vault & Burn-After-Reading)**:
-   - Khi gửi khóa bí mật (AWS Token, Private Key...), tin nhắn được gắn cờ Secret.
-   - Tin nhắn hiển thị dưới dạng nút che mờ **"👁️ BẤM ĐỂ XEM KHÓA BÍ MẬT"**.
-   - Có bộ đếm lùi tự hủy (15s, 30s, 60s). Khi hết giờ, tin nhắn tự động bị xóa sổ khỏi RAM và giao diện.
-
-3. **Untrusted Relay Server (Zero-Knowledge & RAM-only)**:
-   - Máy chủ Relay do doanh nghiệp tự host (On-Premise hoặc VPS riêng).
-   - Server hoạt động hoàn toàn trên RAM, **không dùng Database, không lưu nhật ký (log) nội dung**, không thể giải mã tin nhắn (chỉ chuyển tiếp gói tin mã hóa mù - Ciphertext Envelope).
-
-4. **Xác Minh Vân Tay Bảo Mật (Safety Fingerprint)**:
-   - Mỗi cặp kỹ sư có một mã vân tay số 24 chữ số (SHA-256) được hiển thị trực tiếp trên giao diện để đối chiếu trực tiếp (Out-of-band), triệt tiêu hoàn toàn nguy cơ tấn công Man-in-the-Middle (MITM).
-
-5. **Khẩn Cấp Xóa Sạch (Emergency Wipe)**:
-   - Nút đỏ **"EMERGENCY WIPE"** hủy lập tức toàn bộ session, keypair và tin nhắn trong RAM khi phát hiện thiết bị bị xâm phạm.
+> **Hệ thống Chat P2P & Truyền Khóa Bí Mật Kỹ Thuật (Secret Vault) Doanh Nghiệp Tự Làm Chủ 100%**  
+> Kết hợp ưu điểm kiến trúc từ **[BitChat](https://github.com/permissionlesstech/bitchat)** (Dual transport, Mesh/LAN, Channel) và **[SimpleX Chat](https://github.com/simplex-chat/simplex-chat)** (Zero-metadata, Untrusted Relay, E2EE PFS).
 
 ---
 
-## 2. Hướng Dẫn Khởi Chạy Nhanh Trên Windows
+## 🌟 Tính Năng Cốt Lõi
 
-### Cách 1: Chạy Thử Nghiệm 1-Click (Demo 2 Kỹ Sư)
-Chạy file [start_demo.bat](file:///C:/Users/sonmi/.gemini/antigravity/scratch/enterprise-p2p-chat/start_demo.bat):
-Hệ thống sẽ tự động bật:
-- 1 cửa sổ Server Relay (Port 8888)
-- 1 trình duyệt cho Kỹ sư **Alice** (`http://127.0.0.1:9001`)
-- 1 trình duyệt cho Kỹ sư **Bob** (`http://127.0.0.1:9002`)
+1. **🔒 Mã Hóa Đầu-Cuối Chuẩn Mật Mã Học Công Nghiệp (E2EE PFS)**:
+   - **X25519 (ECDH)**: Mỗi tin nhắn sinh khóa tạm thời ngẫu nhiên (*Ephemeral Key*) mang lại **Perfect Forward Secrecy (PFS)**.
+   - **ChaCha20-Poly1305 (AEAD)**: Mã hóa nội dung đối xứng và xác thực toàn vẹn.
+   - **Ed25519**: Ký số xác thực danh tính kỹ sư, chống giả mạo tin nhắn và tấn công MITM.
+   - **Safety Fingerprint**: Dải 24 chữ số đối chiếu ngoài kênh để xác thực đồng nghiệp 1-chạm.
 
-### Cách 2: Chạy Từng Thành Phần Thủ Công
-1. **Khởi động Relay Server**:
+2. **🔥 Két Bí Mật Kỹ Thuật (Secret Vault & Tự Hủy Đồng Bộ)**:
+   - Gửi API Keys, Token AWS, SSH Private Keys, Mật khẩu Database ở chế độ ẩn an toàn.
+   - **Đồng bộ thời gian tự hủy**: Cả 2 bên gửi và nhận đếm lùi từng giây tuyệt đối theo nhau.
+   - **Hủy tức thì (`🔥 HỦY NGAY`)**: 1 bên bấm hủy -> màn hình đối phương lập tức chuyển sang `🔥 KHÓA ĐÃ TỰ HỦY` và xóa sạch khỏi RAM trong mili-giây.
+   - **Nút Copy 1-chạm**: Sao chép khóa vào Clipboard kèm hiệu ứng phản hồi `✓ Đã Copy!`.
+
+3. **🏢 Máy Chủ Relay Không Tin Cậy (Untrusted Zero-Knowledge Relay)**:
+   - Máy chủ chỉ chạy trên **bộ nhớ RAM**, không lưu trữ Database, không ghi log nội dung.
+   - Server chỉ chuyển tiếp gói tin mã hóa mù (*Ciphertext Envelope*), hoàn toàn không thể giải mã nội dung ngay cả khi bị kiểm soát.
+
+4. **🌐 Trang Quản Trị Hệ Thống (Admin Governance Dashboard - Port 8890)**:
+   - Giao diện Web trực quan quản lý danh sách kỹ sư online theo thời gian thực.
+   - Kiểm soát **Server Access Key**, bật/tắt **IP Whitelist** và **User Whitelist**.
+   - Tra cứu nhật ký an ninh và lịch sử kiểm toán (*Security Audit Logs*).
+
+5. **🚨 Emergency Wipe & Offline LAN Mesh**:
+   - **Emergency Wipe**: Nút đỏ 1-click xóa sạch toàn bộ khóa và phiên chat khỏi RAM khi thiết bị gặp rủi ro.
+   - **Offline LAN Mesh**: Tự động phát hiện và kết nối đồng nghiệp trong mạng nội bộ qua UDP Broadcast Beacon khi mất Internet.
+
+---
+
+## 🚀 Khởi Động Nhanh Trên Windows
+
+### Cách 1: Chạy Thử Nghiệm 1-Click (Demo 2 Kỹ Sư + Server)
+Nhấp đúp chuột vào file:
+```cmd
+start_demo.bat
+```
+Hệ thống sẽ tự động khởi chạy:
+* **Relay Server & Admin Dashboard**: `http://127.0.0.1:8890`
+* **Kỹ sư Alice**: `http://127.0.0.1:9001`
+* **Kỹ sư Bob**: `http://127.0.0.1:9002`
+
+### Cách 2: Khởi Chạy Bằng Lệnh PowerShell
+1. **Khởi động Relay Server:**
    ```powershell
    python server_relay.py 8888
    ```
-2. **Khởi động Kỹ sư A (Alice)**:
+2. **Khởi động Client Kỹ Sư:**
    ```powershell
-   python app_client.py Alice 9001
-   ```
-3. **Khởi động Kỹ sư B (Bob)**:
-   ```powershell
-   python app_client.py Bob 9002
+   # Cú pháp: python app_client.py <Tên_Kỹ_Sư> <IP_Server> <Port_Server> <Access_Key>
+   python app_client.py Alice 127.0.0.1 8888 company_secret_2026
+   python app_client.py Bob 127.0.0.1 8888 company_secret_2026
    ```
 
 ---
 
-## 3. Cấu Trúc Mã Nguồn
+## 📖 Hướng Dẫn Triển Khai Doanh Nghiệp Chi Tiết
 
-- [crypto_core.py](file:///C:/Users/sonmi/.gemini/antigravity/scratch/enterprise-p2p-chat/crypto_core.py): Nhân mật mã học (Ed25519, X25519, ChaCha20Poly1305, HKDF, Fingerprint).
-- [server_relay.py](file:///C:/Users/sonmi/.gemini/antigravity/scratch/enterprise-p2p-chat/server_relay.py): Server chuyển tiếp không tin cậy (Untrusted Zero-Knowledge Relay).
-- [lan_mesh.py](file:///C:/Users/sonmi/.gemini/antigravity/scratch/enterprise-p2p-chat/lan_mesh.py): Mô-đun phát hiện đồng nghiệp và mesh mạng LAN khi mất Internet.
-- [app_client.py](file:///C:/Users/sonmi/.gemini/antigravity/scratch/enterprise-p2p-chat/app_client.py): Ứng dụng client Windows tích hợp UI Secret Vault.
+Xem tài liệu đầy đủ tại: **[HUONG_DAN_THIET_LAP.md](HUONG_DAN_THIET_LAP.md)**  
+Gồm các hướng dẫn:
+* Triển khai lên Cloud VPS (Ubuntu / Windows Server chạy 24/7).
+* Triển khai qua mạng nội bộ Wi-Fi / LAN công ty.
+* Triển khai qua Mesh VPN (Tailscale / WireGuard) miễn phí không cần mở cổng Router.
+* Thiết lập Systemd Service tự khởi động cùng hệ thống.
+
+---
+
+## 📂 Cấu Trúc Mã Nguồn
+
+```text
+enterprise-p2p-chat/
+├── crypto_core.py          # Thư viện mật mã học E2EE (X25519, ChaCha20Poly1305, Ed25519)
+├── server_relay.py         # Untrusted Relay Server & Web Admin Dashboard (Port 8890)
+├── config_server.json      # File cấu hình Access Key, IP Whitelist, User Whitelist
+├── app_client.py           # Client Desktop Web GUI (Secret Vault, Burn Sync, Quick Copy)
+├── lan_mesh.py             # Mô-đun Offline P2P LAN Mesh Discovery
+├── start_demo.bat          # Script 1-click chạy mô phỏng 2 kỹ sư + server
+├── start_relay.bat         # Script 1-click chạy server relay
+├── HUONG_DAN_THIET_LAP.md  # Hướng dẫn thiết lập toàn diện
+└── README.md               # Tài liệu tổng quan dự án
+```
+
+---
+
+## ⚖️ Giấy Phép & Bảo Mật
+
+Phát triển cho mục đích truyền khóa bí mật và liên lạc kỹ thuật nội bộ an toàn. Mã nguồn mở theo giấy phép MIT.
