@@ -43,24 +43,17 @@
 ### Cách 1: Chạy Thử Nghiệm 1-Click (Demo 2 Kỹ Sư + Server)
 Nhấp đúp chuột vào file:
 ```cmd
-start_demo.bat
+Start_EnterpriseChat_Demo.bat
 ```
 Hệ thống sẽ tự động khởi chạy:
 * **Relay Server & Admin Dashboard**: `http://127.0.0.1:8890`
 * **Kỹ sư Alice**: `http://127.0.0.1:9001`
 * **Kỹ sư Bob**: `http://127.0.0.1:9002`
 
-### Cách 2: Khởi Chạy Bằng Lệnh PowerShell
-1. **Khởi động Relay Server:**
-   ```powershell
-   python server_relay.py 8888
-   ```
-2. **Khởi động Client Kỹ Sư:**
-   ```powershell
-   # Cú pháp: python app_client.py <Tên_Kỹ_Sư> <IP_Server> <Port_Server> <Access_Key>
-   python app_client.py Alice 127.0.0.1 8888 company_secret_2026
-   python app_client.py Bob 127.0.0.1 8888 company_secret_2026
-   ```
+### Cách 2: Khởi Chạy Mạng LAN Công Ty (Dành Cho Chủ Phòng Máy)
+1. Bấm đúp file `Start_EnterpriseChat_Server.bat` để bật Server Relay.
+2. Bấm đúp file `Start_EnterpriseChat_Client.bat` để mở giao diện Chat của bạn.
+3. Gửi thư mục `EnterpriseChat_Client_Package` cho đồng nghiệp -> Đồng nghiệp bấm `Launch_EnterpriseChat.bat` là xong.
 
 ---
 
@@ -69,7 +62,7 @@ Hệ thống sẽ tự động khởi chạy:
 Xem tài liệu đầy đủ tại: **[HUONG_DAN_THIET_LAP.md](HUONG_DAN_THIET_LAP.md)**  
 Gồm các hướng dẫn:
 * Triển khai lên Cloud VPS (Ubuntu / Windows Server chạy 24/7).
-* Triển khai qua mạng nội bộ Wi-Fi / LAN công ty.
+* Triển khai qua mạng nội bộ Wi-Fi / LAN công ty (1-Click Auto Discovery).
 * Triển khai qua Mesh VPN (Tailscale / WireGuard) miễn phí không cần mở cổng Router.
 * Thiết lập Systemd Service tự khởi động cùng hệ thống.
 
@@ -79,15 +72,18 @@ Gồm các hướng dẫn:
 
 ```text
 enterprise-p2p-chat/
-├── crypto_core.py          # Thư viện mật mã học E2EE (X25519, ChaCha20Poly1305, Ed25519)
-├── server_relay.py         # Untrusted Relay Server & Web Admin Dashboard (Port 8890)
-├── config_server.json      # File cấu hình Access Key, IP Whitelist, User Whitelist
-├── app_client.py           # Client Desktop Web GUI (Secret Vault, Burn Sync, Quick Copy)
-├── lan_mesh.py             # Mô-đun Offline P2P LAN Mesh Discovery
-├── start_demo.bat          # Script 1-click chạy mô phỏng 2 kỹ sư + server
-├── start_relay.bat         # Script 1-click chạy server relay
-├── HUONG_DAN_THIET_LAP.md  # Hướng dẫn thiết lập toàn diện
-└── README.md               # Tài liệu tổng quan dự án
+├── crypto_core.py                  # Thư viện mật mã học E2EE (X25519, ChaCha20Poly1305, Ed25519)
+├── server_relay.py                 # Untrusted Relay Server & Web Admin Dashboard (Port 8890)
+├── config_server.json              # File cấu hình Server Access Key, IP Whitelist
+├── config_client.json              # File cấu hình Client (Auto-discovery)
+├── app_client.py                   # Client Desktop Web GUI (Secret Vault, Burn Sync, Quick Copy)
+├── lan_mesh.py                     # Mô-đun Offline P2P LAN Mesh Discovery
+├── Start_EnterpriseChat_Server.bat # Bộ khởi động Server Relay dành cho chủ máy
+├── Start_EnterpriseChat_Client.bat # Bộ khởi động Client cá nhân dành cho chủ máy
+├── Start_EnterpriseChat_Demo.bat   # Script 1-click chạy mô phỏng 2 kỹ sư + server
+├── EnterpriseChat_Client_Package/  # Gói ứng dụng độc lập 1-Click dành cho đồng nghiệp (.exe + Launch_EnterpriseChat.bat)
+├── HUONG_DAN_THIET_LAP.md          # Hướng dẫn thiết lập toàn diện
+└── README.md                       # Tài liệu tổng quan dự án
 ```
 
 ---

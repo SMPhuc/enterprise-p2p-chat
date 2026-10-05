@@ -1,0 +1,8 @@
+{
+  "relay_host": "auto",
+  "fallback_ip": "192.168.1.33",
+  "relay_port": 8888,
+  "server_access_key": "company_secret_2026",
+  "default_username": "",
+  "mo_ta": "Tu dong do tim Server Relay trong mang LAN Wi-Fi cong ty. Neu router chan broadcast thi tu dong dung fallback_ip"
+}
