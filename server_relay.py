@@ -173,6 +173,20 @@ class EnterpriseRelayServer:
                         await target_writer.drain()
                         logging.info(f"🔒 Routed blind E2EE envelope: {client_name} -> {target_user}")
 
+                # 3.5 Synchronized Instant Burn Event Routing
+                elif msg_type == "SYNC_BURN":
+                    target_user = msg.get("target_user")
+                    if target_user in self.clients:
+                        target_writer = self.clients[target_user]["writer"]
+                        relay_msg = json.dumps({
+                            "type": "SYNC_BURN",
+                            "sender": client_name,
+                            "msg_id": msg.get("msg_id")
+                        }) + "\n"
+                        target_writer.write(relay_msg.encode('utf-8'))
+                        asyncio.create_task(target_writer.drain())
+                        logging.info(f"🔥 Routed instant burn event: {client_name} -> {target_user} [MsgId: {msg.get('msg_id')}]")
+
                 # 4. Join Channel
                 elif msg_type == "JOIN_CHANNEL":
                     ch = msg.get("channel")

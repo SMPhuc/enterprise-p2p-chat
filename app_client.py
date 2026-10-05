@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import json
 import os
+import socket
 import sys
 import threading
 import time
@@ -18,6 +20,7 @@ CLIENT_STATE = {
     "org_cert": None,
     "relay_host": "127.0.0.1",
     "relay_port": 8888,
+    "server_access_key": "company_secret_2026",
     "directory": {},
     "active_chat": "#devops-secrets",
     "chat_messages": {}, # target -> list of msgs
@@ -91,7 +94,7 @@ HTML_INTERFACE = """<!DOCTYPE html>
         .options-bar { display: flex; gap: 15px; margin-bottom: 8px; font-size: 12px; color: var(--text-sub); align-items: center; }
         .options-bar label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
         .input-row { display: flex; gap: 10px; }
-        textarea { flex: 1; height: 50px; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; color: white; resize: none; }
+        textarea { flex: 1; height: 50px; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; color: white; resize: none; font-size: 13px; }
         button.btn-send { width: 90px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         button.btn-send:hover { background: #0369a1; }
 
@@ -167,7 +170,7 @@ HTML_INTERFACE = """<!DOCTYPE html>
                 </label>
             </div>
             <div class="input-row">
-                <textarea id="txt-msg" placeholder="Nhập tin nhắn hoặc dán SSH Key / API Key / Mật khẩu tại đây... (Mã hóa E2EE)"></textarea>
+                <textarea id="txt-msg" placeholder="Nhập tin nhắn hoặc dán SSH Key / API Key / Mật khẩu tại đây... (Nhấn Enter để gửi, Shift+Enter để xuống dòng)" onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendMessage(); }"></textarea>
                 <button class="btn-send" onclick="sendMessage()">GỬI (E2EE)</button>
             </div>
         </div>
@@ -177,6 +180,7 @@ HTML_INTERFACE = """<!DOCTYPE html>
         let currentTarget = "#devops-secrets";
         let myUsername = "";
         let myPubkey = "";
+        let locallyRevealed = {}; // msg_id -> boolean
 
         function copyToClipboard(text, btnElement) {
             let rawText = text;
@@ -269,15 +273,15 @@ HTML_INTERFACE = """<!DOCTYPE html>
                 if (m.is_secret_key) {
                     if (m.is_burned) {
                         html += `
-                            <div class="secret-vault-card" style="background:#262626; border-color:#525252;">
+                            <div class="secret-vault-card" style="background:#1c1917; border-color:#44403c;">
                                 <div style="color:#ef4444; font-weight:bold; font-size:12px;">
-                                    🔥 KHÓA ĐÃ TỰ HỦY HOÀN TOÀN KHỎI BỘ NHỚ RAM
+                                    🔥 KHÓA ĐÃ TỰ HỦY
                                 </div>
                             </div>
                         `;
-                    } else if (m.revealed_at) {
+                    } else if (isMine || locallyRevealed[m.id]) {
                         // Secret is actively revealed
-                        let countdownText = m.burn_after_seconds > 0 ? `🔥 Tự hủy sau: ${m.remaining_seconds || m.burn_after_seconds}s` : `🔒 Không tự hủy`;
+                        let countdownText = m.burn_after_seconds > 0 ? `🔥 Tự hủy sau: ${m.remaining_seconds !== undefined ? m.remaining_seconds : m.burn_after_seconds}s` : `🔒 Không tự hủy`;
                         html += `
                             <div class="secret-vault-card">
                                 <div class="secret-header">
@@ -287,19 +291,23 @@ HTML_INTERFACE = """<!DOCTYPE html>
                                 <div class="secret-content">${escapeHtml(m.text)}</div>
                                 <div style="margin-top:8px; display:flex; gap:10px;">
                                     <button class="btn-copy" onclick="copyToClipboard('${encodedText}', this)">📋 Copy Khóa Vào Clipboard</button>
-                                    <button class="btn-burn-now" onclick="burnMessageNow('${m.id}')">🔥 HỦY NGAY</button>
+                                    <button class="btn-burn-now" onclick="burnMessageNow('${m.id}', '${currentTarget}')">🔥 HỦY NGAY</button>
                                 </div>
                             </div>
                         `;
                     } else {
                         // Secret is waiting to be revealed
+                        let countdownText = m.burn_after_seconds > 0 ? `🔥 Tự hủy sau: ${m.remaining_seconds !== undefined ? m.remaining_seconds : m.burn_after_seconds}s` : `🔒 Không tự hủy`;
                         html += `
                             <div class="secret-vault-card">
                                 <div class="secret-header">
                                     <span>🔒 KHÓA BÍ MẬT KỸ THUẬT (SECRET VAULT)</span>
-                                    ${m.burn_after_seconds > 0 ? `<span>🔥 Tự hủy sau ${m.burn_after_seconds}s khi mở</span>` : ''}
+                                    <span style="color:#f87171;">${countdownText}</span>
                                 </div>
-                                <button class="btn-reveal" onclick="revealMessage('${m.id}')">👁️ BẤM ĐỂ XEM KHÓA BÍ MẬT</button>
+                                <div style="margin-top:6px; display:flex; gap:10px; align-items:center;">
+                                    <button class="btn-reveal" onclick="revealMessage('${m.id}')">👁️ BẤM ĐỂ XEM KHÓA BÍ MẬT</button>
+                                    <button class="btn-burn-now" onclick="burnMessageNow('${m.id}', '${currentTarget}')">🔥 HỦY NGAY</button>
+                                </div>
                             </div>
                         `;
                     }
@@ -314,28 +322,30 @@ HTML_INTERFACE = """<!DOCTYPE html>
         }
 
         async function revealMessage(msgId) {
-            await fetch('/api/reveal', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: msgId })
-            });
+            locallyRevealed[msgId] = true;
             fetchState();
         }
 
-        async function burnMessageNow(msgId) {
+        async function burnMessageNow(msgId, target) {
             await fetch('/api/burn', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: msgId })
+                body: JSON.stringify({ id: msgId, target: target })
             });
             fetchState();
         }
 
         async function sendMessage() {
-            let text = document.getElementById('txt-msg').value.trim();
+            let txtElem = document.getElementById('txt-msg');
+            let text = txtElem.value.trim();
             if (!text) return;
+            
             let isSecret = document.getElementById('chk-secret').checked;
             let burnSec = parseInt(document.getElementById('sel-burn').value);
+
+            // Xóa ngay lập tức nội dung khỏi ô nhập liệu
+            txtElem.value = "";
+            txtElem.focus();
 
             await fetch('/api/send', {
                 method: 'POST',
@@ -348,7 +358,6 @@ HTML_INTERFACE = """<!DOCTYPE html>
                 })
             });
 
-            document.getElementById('txt-msg').value = "";
             fetchState();
         }
 
@@ -383,7 +392,6 @@ HTML_INTERFACE = """<!DOCTYPE html>
 
 class LocalHTTPHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
-        # Tắt bớt log HTTP console cho gọn
         pass
 
     def do_GET(self):
@@ -394,19 +402,20 @@ class LocalHTTPHandler(SimpleHTTPRequestHandler):
             self.wfile.write(HTML_INTERFACE.encode('utf-8'))
         elif self.path == "/api/state":
             now = time.time()
-            # Xử lý tự hủy các tin nhắn bí mật đã mở xem (Burn-after-reading)
+            # Xử lý tự hủy đồng bộ thời gian dựa trên timestamp tạo tin nhắn
             for target, msg_list in CLIENT_STATE["chat_messages"].items():
                 for m in msg_list:
                     burn_sec = m.get("burn_after_seconds", 0)
-                    revealed_at = m.get("revealed_at")
-                    if burn_sec > 0 and revealed_at and not m.get("is_burned", False):
-                        remaining = burn_sec - (now - revealed_at)
+                    if burn_sec > 0 and not m.get("is_burned", False):
+                        created_ts = m.get("timestamp", now)
+                        expires_at = created_ts + burn_sec
+                        remaining = expires_at - now
                         if remaining <= 0:
                             m["is_burned"] = True
-                            m["text"] = "🔥 [KHÓA ĐÃ TỰ HỦY HOÀN TOÀN KHỎI BỘ NHỚ RAM]"
+                            m["text"] = "🔥 KHÓA ĐÃ TỰ HỦY"
                             m["remaining_seconds"] = 0
                         else:
-                            m["remaining_seconds"] = int(remaining)
+                            m["remaining_seconds"] = max(0, int(remaining))
 
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -445,16 +454,17 @@ class LocalHTTPHandler(SimpleHTTPRequestHandler):
             is_secret = data.get("is_secret", False)
             burn_sec = data.get("burn_after_seconds", 0)
             msg_id = f"msg_{int(time.time() * 1000)}_{os.urandom(3).hex()}"
+            ts = time.time()
 
             msg_obj = {
                 "id": msg_id,
                 "sender": CLIENT_STATE["username"],
                 "text": text,
-                "timestamp": time.time(),
+                "timestamp": ts,
                 "is_secret_key": is_secret,
                 "burn_after_seconds": burn_sec,
-                "revealed_at": time.time() if is_secret else None, # Người gửi xem được luôn
-                "is_burned": False
+                "is_burned": False,
+                "remaining_seconds": burn_sec if burn_sec > 0 else 0
             }
 
             if target not in CLIENT_STATE["chat_messages"]:
@@ -495,29 +505,28 @@ class LocalHTTPHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"status":"OK"}')
 
-        elif self.path == "/api/reveal":
-            # Đánh dấu đã mở khóa bí mật -> bắt đầu đếm lùi tự hủy
-            msg_id = data.get("id")
-            for target, msg_list in CLIENT_STATE["chat_messages"].items():
-                for m in msg_list:
-                    if m.get("id") == msg_id:
-                        if not m.get("revealed_at"):
-                            m["revealed_at"] = time.time()
-                        break
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"status":"REVEALED"}')
-
         elif self.path == "/api/burn":
             # Hủy ngay lập tức (Scrub RAM immediately)
             msg_id = data.get("id")
+            target_user = data.get("target")
+
             for target, msg_list in CLIENT_STATE["chat_messages"].items():
                 for m in msg_list:
                     if m.get("id") == msg_id:
                         m["is_burned"] = True
-                        m["text"] = "🔥 [KHÓA ĐÃ TỰ HỦY HOÀN TOÀN KHỎI BỘ NHỚ RAM]"
+                        m["text"] = "🔥 KHÓA ĐÃ TỰ HỦY"
+                        m["remaining_seconds"] = 0
                         break
+
+            # Gửi thông điệp SYNC_BURN tới đối phương nếu là chat 1-1
+            if RELAY_WRITER and target_user and not target_user.startswith("#"):
+                sync_wire = json.dumps({
+                    "type": "SYNC_BURN",
+                    "target_user": target_user,
+                    "msg_id": msg_id
+                }) + "\n"
+                RELAY_WRITER.write(sync_wire.encode('utf-8'))
+
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
@@ -580,16 +589,28 @@ async def connect_relay_loop():
                         if dec:
                             if sender not in CLIENT_STATE["chat_messages"]:
                                 CLIENT_STATE["chat_messages"][sender] = []
+                            burn_sec = dec.get("burn_after_seconds", 0)
                             CLIENT_STATE["chat_messages"][sender].append({
                                 "id": msg_id,
                                 "sender": sender,
                                 "text": dec["text"],
                                 "timestamp": dec["timestamp"],
                                 "is_secret_key": dec.get("is_secret_key", False),
-                                "burn_after_seconds": dec.get("burn_after_seconds", 0),
-                                "revealed_at": None, # Chưa mở xem
-                                "is_burned": False
+                                "burn_after_seconds": burn_sec,
+                                "is_burned": False,
+                                "remaining_seconds": burn_sec if burn_sec > 0 else 0
                             })
+
+                    elif msg_type == "SYNC_BURN":
+                        # Đồng bộ việc đối phương bấm HỦY NGAY
+                        msg_id = msg.get("msg_id")
+                        for target, msg_list in CLIENT_STATE["chat_messages"].items():
+                            for m in msg_list:
+                                if m.get("id") == msg_id:
+                                    m["is_burned"] = True
+                                    m["text"] = "🔥 KHÓA ĐÃ TỰ HỦY"
+                                    m["remaining_seconds"] = 0
+                                    break
 
                     elif msg_type == "CHANNEL_MSG":
                         ch = msg.get("channel")
@@ -607,7 +628,6 @@ async def connect_relay_loop():
                                 "timestamp": dec["ts"],
                                 "is_secret_key": False,
                                 "burn_after_seconds": 0,
-                                "revealed_at": None,
                                 "is_burned": False
                             })
                 except Exception:
@@ -617,16 +637,42 @@ async def connect_relay_loop():
             CLIENT_STATE["connected_to_relay"] = False
             await asyncio.sleep(3)
 
+def find_available_port(start_port: int) -> int:
+    port = start_port
+    while port < 65535:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(('127.0.0.1', port)) != 0:
+                return port
+            port += 1
+    return start_port
+
 def start_http_server(port: int):
     httpd = HTTPServer(('127.0.0.1', port), LocalHTTPHandler)
     httpd.serve_forever()
 
 if __name__ == "__main__":
-    username = sys.argv[1] if len(sys.argv) > 1 else f"Engineer_{int(time.time()) % 1000}"
-    web_port = int(sys.argv[2]) if len(sys.argv) > 2 else 9001
-    relay_host = sys.argv[3] if len(sys.argv) > 3 else "127.0.0.1"
-    relay_port = int(sys.argv[4]) if len(sys.argv) > 4 else 8888
-    access_key = sys.argv[5] if len(sys.argv) > 5 else "company_secret_2026"
+    args = sys.argv[1:]
+    username = args[0] if len(args) > 0 else f"Engineer_{int(time.time()) % 1000}"
+    
+    desired_web_port = 9001
+    relay_host = "127.0.0.1"
+    relay_port = 8888
+    access_key = "company_secret_2026"
+
+    rem_args = args[1:]
+    if rem_args:
+        first = rem_args[0]
+        if first.isdigit() and "." not in first and int(first) >= 1000:
+            desired_web_port = int(first)
+            if len(rem_args) > 1: relay_host = rem_args[1]
+            if len(rem_args) > 2 and rem_args[2].isdigit(): relay_port = int(rem_args[2])
+            if len(rem_args) > 3: access_key = rem_args[3]
+        else:
+            relay_host = first
+            if len(rem_args) > 1 and rem_args[1].isdigit(): relay_port = int(rem_args[1])
+            if len(rem_args) > 2: access_key = rem_args[2]
+
+    web_port = find_available_port(desired_web_port)
 
     CLIENT_STATE["username"] = username
     CLIENT_STATE["relay_host"] = relay_host
