@@ -1,16 +1,25 @@
 @echo off
 chcp 65001 >nul
-title EnterpriseSecretChat - Client
+cd /d "%~dp0"
+title EnterpriseSecretChat - Client Launcher
 cls
-echo =======================================================
+echo ================================================================
 echo   🛡️ ENTERPRISE SECRET CHAT - SECURE CLIENT LAUNCHER
-echo =======================================================
+echo ================================================================
 echo.
-echo [*] Auto-discovering Enterprise Server on local network...
+echo [*] Auto-discovering Enterprise Server on local Wi-Fi/LAN...
 echo.
 set /p ENG_NAME=">> Enter your Engineer Name (or press Enter for default): "
 if "%ENG_NAME%"=="" (
-    EnterpriseSecretChat.exe
-) else (
-    EnterpriseSecretChat.exe "%ENG_NAME%"
+    set ENG_NAME=Engineer_%RANDOM%
+)
+
+echo.
+echo [OK] Starting secure chat interface for: %ENG_NAME% ...
+EnterpriseSecretChat.exe "%ENG_NAME%"
+
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERROR] Application exited with error code: %ERRORLEVEL%
+    pause
 )
