@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 *.pyo
+*.zip
 .DS_Store
 Thumbs.db
 
@@ -8,6 +9,10 @@ Thumbs.db
 config_server.json
 config_client.json
 */config_client.json
+
+# Personal colleague batch launchers
+Launch_EnterpriseChat (*).bat
+*/Launch_EnterpriseChat (*).bat
 
 # Test suites
 test_*.py
