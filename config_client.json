@@ -1,0 +1,7 @@
+{
+  "relay_host": "127.0.0.1",
+  "relay_port": 8888,
+  "server_access_key": "company_secret_2026",
+  "default_username": "",
+  "huong_dan": "Doi relay_host thanh IP Tailscale (vi du: 100.80.90.10) cua Server truoc khi gui cho dong nghiep"
+}

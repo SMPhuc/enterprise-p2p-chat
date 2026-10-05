@@ -659,6 +659,19 @@ if __name__ == "__main__":
     relay_port = 8888
     access_key = "company_secret_2026"
 
+    # Đọc file config_client.json nếu có
+    if os.path.exists("config_client.json"):
+        try:
+            with open("config_client.json", "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+                relay_host = cfg.get("relay_host", relay_host)
+                relay_port = cfg.get("relay_port", relay_port)
+                access_key = cfg.get("server_access_key", access_key)
+                if not args and cfg.get("default_username"):
+                    username = cfg.get("default_username")
+        except Exception:
+            pass
+
     rem_args = args[1:]
     if rem_args:
         first = rem_args[0]
