@@ -3,3 +3,12 @@ __pycache__/
 *.pyo
 .DS_Store
 Thumbs.db
+
+# Test suites
+test_*.py
+
+# Personal/Dedicated colleague packages
+EnterpriseChat_Client_Package (QuangThanh)/
+EnterpriseChat_Client_Package (ThanhQuang)/
+Goi_Chat_Quang_Thanh/
+Goi_Chat_Thanh_Quang/

@@ -81,9 +81,7 @@ enterprise-p2p-chat/
 ├── Start_EnterpriseChat_Server.bat # Bộ khởi động Server Relay dành cho chủ máy
 ├── Start_EnterpriseChat_Client.bat # Bộ khởi động Client cá nhân dành cho chủ máy (SMPhuc)
 ├── Start_EnterpriseChat_Demo.bat   # Script 1-click chạy mô phỏng 2 người dùng + server
-├── Goi_Chat_Quang_Thanh/           # Gói 1-Click dành riêng cho đồng nghiệp: Quang Thanh
-├── Goi_Chat_Thanh_Quang/           # Gói 1-Click dành riêng cho đồng nghiệp: Thành Quang
-├── EnterpriseChat_Client_Package/  # Gói ứng dụng tổng hợp dành cho đồng nghiệp khác
+├── EnterpriseChat_Client_Package/  # Gói ứng dụng phân phối 1-Click dành cho đồng nghiệp (.exe + launchers)
 ├── HUONG_DAN_THIET_LAP.md          # Hướng dẫn thiết lập toàn diện
 └── README.md                       # Tài liệu tổng quan dự án
 ```
