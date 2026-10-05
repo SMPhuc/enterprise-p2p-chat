@@ -97,6 +97,7 @@ class EnterpriseRelayServer:
         while True:
             try:
                 sock.sendto(beacon_data, ('<broadcast>', 9998))
+                sock.sendto(beacon_data, ('127.0.0.1', 9998))
             except Exception:
                 pass
             await asyncio.sleep(2)
